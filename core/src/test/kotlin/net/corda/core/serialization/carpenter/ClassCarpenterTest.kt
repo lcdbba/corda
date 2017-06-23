@@ -10,40 +10,12 @@ import kotlin.test.assertTrue
 import net.corda.core.serialization.carpenter.ClassSchema
 import net.corda.core.serialization.carpenter.InterfaceSchema
 
-interface DummyInterface2 {
-    val a: String
-    val b: Int
-}
-
-class Dummy2 (a: String, override val b: Int) : DummyInterface2 {
-    override val a = a
-}
 
 class ClassCarpenterTest {
-    /*
-    cw.visitInnerClass(
-        "net/corda/carpenter/ClassCarpenterTest$DummyInterface",
-        "net/corda/carpenter/ClassCarpenterTest",
-        "DummyInterface",
-        ACC_PUBLIC + ACC_STATIC + ACC_ABSTRACT + ACC_INTERFACE);
-    */
     interface DummyInterface {
         val a: String
         val b: Int
     }
-
-    /*
-    cw.visitInnerClass(
-        "net/corda/carpenter/ClassCarpenterTest$Dummy",
-        "net/corda/carpenter/ClassCarpenterTest",
-        "Dummy",
-        ACC_PUBLIC + ACC_FINAL + ACC_STATIC);
-    */
-    class Dummy (override val a: String, override val b: Int) : DummyInterface
-
-    val dummy = Dummy ("hi", 1)
-    val dummy2 = Dummy2 ("hi", 1)
-
 
     val cc = ClassCarpenter()
 
@@ -203,7 +175,7 @@ class ClassCarpenterTest {
         assertEquals(iface.declaredMethods.size, 1)
         assertEquals(iface.declaredMethods[0].name, "getA")
 
-        val schema2 = ClassCarpenter.ClassSchema(
+        val schema2 = ClassSchema(
                 "gen.Derived",
                 mapOf("a" to ClassCarpenter.NonNullableField (Int::class.java)),
                 interfaces = listOf(iface))
@@ -229,7 +201,7 @@ class ClassCarpenterTest {
                         "c" to ClassCarpenter.NonNullableField(Int::class.java),
                         "d" to ClassCarpenter.NonNullableField(String::class.java)))
 
-        val class1 = ClassCarpenter.ClassSchema(
+        val class1 = ClassSchema(
                 "gen.Derived",
                 mapOf(
                         "a" to ClassCarpenter.NonNullableField(Int::class.java),
@@ -253,20 +225,20 @@ class ClassCarpenterTest {
 
     @Test
     fun `interface implementing interface`() {
-        val iFace1 = ClassCarpenter.InterfaceSchema(
+        val iFace1 = InterfaceSchema(
                 "gen.Interface1",
                 mapOf(
                         "a" to ClassCarpenter.NonNullableField (Int::class.java),
                         "b" to ClassCarpenter.NonNullableField(String::class.java)))
 
-        val iFace2 = ClassCarpenter.InterfaceSchema(
+        val iFace2 = InterfaceSchema(
                 "gen.Interface2",
                 mapOf(
                         "c" to ClassCarpenter.NonNullableField(Int::class.java),
                         "d" to ClassCarpenter.NonNullableField(String::class.java)),
                 interfaces = listOf(cc.build(iFace1)))
 
-        val class1 = ClassCarpenter.ClassSchema(
+        val class1 = ClassSchema(
                 "gen.Derived",
                 mapOf(
                         "a" to ClassCarpenter.NonNullableField(Int::class.java),
