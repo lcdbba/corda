@@ -6,6 +6,7 @@ import net.corda.core.crypto.DigitalSignature
 import net.corda.core.flows.FlowLogic
 import net.corda.core.getOrThrow
 import net.corda.core.identity.Party
+import net.corda.core.internal.datavending.FetchDataFlow
 import net.corda.core.node.services.NotaryService
 import net.corda.core.node.services.TimeWindowChecker
 import net.corda.core.serialization.deserialize
@@ -63,6 +64,7 @@ class BFTNonValidatingNotaryService(override val services: ServiceHubInternal) :
         override fun call(): Void? {
             val stx = receive<FilteredTransaction>(otherSide).unwrap { it }
             val signatures = commit(stx)
+            send(otherSide, FetchDataFlow.EndRequest)
             send(otherSide, signatures)
             return null
         }

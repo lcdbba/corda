@@ -8,8 +8,6 @@ import net.corda.core.crypto.DigitalSignature
 import net.corda.core.crypto.isFulfilledBy
 import net.corda.core.flows.FlowException
 import net.corda.core.flows.FlowLogic
-import net.corda.core.identity.AbstractParty
-import net.corda.core.identity.AnonymousParty
 import net.corda.core.identity.Party
 import net.corda.core.serialization.CordaSerializable
 import net.corda.core.transactions.SignedTransaction
@@ -111,8 +109,9 @@ abstract class AbstractStateReplacementFlow {
         @Suspendable
         private fun getParticipantSignature(party: Party, stx: SignedTransaction): DigitalSignature.WithKey {
             val proposal = Proposal(originalState.ref, modification, stx)
-            val response = sendAndReceive<DigitalSignature.WithKey>(party, proposal)
-            return response.unwrap {
+            // SendTransactionFlow allows otherParty to access our data to resolve the transaction.
+            subFlow(SendTransactionFlow(party, proposal))
+            return receive<DigitalSignature.WithKey>(party).unwrap {
                 check(party.owningKey.isFulfilledBy(it.by)) { "Not signed by the required participant" }
                 it.verify(stx.id)
                 it

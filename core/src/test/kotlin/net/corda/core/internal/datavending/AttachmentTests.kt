@@ -1,13 +1,17 @@
-package net.corda.node.messaging
+package net.corda.core.internal.datavending
 
+import co.paralleluniverse.fibers.Suspendable
 import net.corda.core.contracts.Attachment
 import net.corda.core.crypto.SecureHash
 import net.corda.core.crypto.sha256
+import net.corda.core.flows.FlowLogic
+import net.corda.core.flows.InitiatedBy
+import net.corda.core.flows.InitiatingFlow
 import net.corda.core.getOrThrow
+import net.corda.core.identity.Party
 import net.corda.core.messaging.SingleMessageRecipient
 import net.corda.core.node.services.ServiceInfo
-import net.corda.flows.FetchAttachmentsFlow
-import net.corda.flows.FetchDataFlow
+import net.corda.flows.SendTransactionFlow
 import net.corda.node.services.config.NodeConfiguration
 import net.corda.node.services.database.RequeryConfiguration
 import net.corda.node.services.network.NetworkMapService
@@ -61,6 +65,8 @@ class AttachmentTests {
     @Test
     fun `download and store`() {
         val (n0, n1) = mockNet.createTwoNodes()
+        n0.registerInitiatedFlow(TestResponse::class.java)
+        n1.registerInitiatedFlow(TestResponse::class.java)
 
         // Insert an attachment into node zero's store directly.
         val id = n0.database.transaction {
@@ -69,7 +75,7 @@ class AttachmentTests {
 
         // Get node one to run a flow to fetch it and insert it.
         mockNet.runNetwork()
-        val f1 = n1.services.startFlow(FetchAttachmentsFlow(setOf(id), n0.info.legalIdentity))
+        val f1 = n1.services.startFlow(FetchAttachmentsFlow(setOf(id), n0.info.legalIdentity).initiating())
         mockNet.runNetwork()
         assertEquals(0, f1.resultFuture.getOrThrow().fromDisk.size)
 
@@ -83,18 +89,20 @@ class AttachmentTests {
         // Shut down node zero and ensure node one can still resolve the attachment.
         n0.stop()
 
-        val response: FetchDataFlow.Result<Attachment> = n1.services.startFlow(FetchAttachmentsFlow(setOf(id), n0.info.legalIdentity)).resultFuture.getOrThrow()
+        val response: FetchDataFlow.Result<Attachment> = n1.services.startFlow(FetchAttachmentsFlow(setOf(id), n0.info.legalIdentity).initiating()).resultFuture.getOrThrow()
         assertEquals(attachment, response.fromDisk[0])
     }
 
     @Test
     fun `missing`() {
         val (n0, n1) = mockNet.createTwoNodes()
+        n0.registerInitiatedFlow(TestResponse::class.java)
+        n1.registerInitiatedFlow(TestResponse::class.java)
 
         // Get node one to fetch a non-existent attachment.
         val hash = SecureHash.randomSHA256()
         mockNet.runNetwork()
-        val f1 = n1.services.startFlow(FetchAttachmentsFlow(setOf(hash), n0.info.legalIdentity))
+        val f1 = n1.services.startFlow(FetchAttachmentsFlow(setOf(hash), n0.info.legalIdentity).initiating())
         mockNet.runNetwork()
         val e = assertFailsWith<FetchDataFlow.HashNotFound> { f1.resultFuture.getOrThrow() }
         assertEquals(hash, e.requested)
@@ -119,6 +127,9 @@ class AttachmentTests {
         }, true, null, null, ServiceInfo(NetworkMapService.type), ServiceInfo(SimpleNotaryService.type))
         val n1 = mockNet.createNode(n0.network.myAddress)
 
+        n0.registerInitiatedFlow(TestResponse::class.java)
+        n1.registerInitiatedFlow(TestResponse::class.java)
+
         val attachment = fakeAttachment()
         // Insert an attachment into node zero's store directly.
         val id = n0.database.transaction {
@@ -139,8 +150,23 @@ class AttachmentTests {
 
         // Get n1 to fetch the attachment. Should receive corrupted bytes.
         mockNet.runNetwork()
-        val f1 = n1.services.startFlow(FetchAttachmentsFlow(setOf(id), n0.info.legalIdentity))
+        val f1 = n1.services.startFlow(FetchAttachmentsFlow(setOf(id), n0.info.legalIdentity).initiating())
         mockNet.runNetwork()
         assertFailsWith<FetchDataFlow.DownloadedVsRequestedDataMismatch> { f1.resultFuture.getOrThrow() }
     }
+
+
+    @InitiatingFlow
+    private class InitiatingWrapper<T>(private val flow: FlowLogic<T>) : FlowLogic<T>() {
+        @Suspendable
+        override fun call() = subFlow(flow)
+    }
+
+    @InitiatedBy(InitiatingWrapper::class)
+    private class TestResponse(val otherSide: Party) : FlowLogic<Unit>() {
+        @Suspendable
+        override fun call() = subFlow(SendTransactionFlow(otherSide, null))
+    }
+
+    private fun <T> FlowLogic<T>.initiating() = InitiatingWrapper(this)
 }

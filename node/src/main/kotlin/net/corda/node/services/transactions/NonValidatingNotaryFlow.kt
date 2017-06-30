@@ -2,6 +2,7 @@ package net.corda.node.services.transactions
 
 import co.paralleluniverse.fibers.Suspendable
 import net.corda.core.identity.Party
+import net.corda.core.internal.datavending.FetchDataFlow
 import net.corda.core.node.services.TrustedAuthorityNotaryService
 import net.corda.core.transactions.FilteredTransaction
 import net.corda.core.utilities.unwrap
@@ -23,6 +24,7 @@ class NonValidatingNotaryFlow(otherSide: Party, service: TrustedAuthorityNotaryS
             it.verify()
             it
         }
+        send(otherSide, FetchDataFlow.EndRequest)
         return TransactionParts(ftx.rootHash, ftx.filteredLeaves.inputs, ftx.filteredLeaves.timeWindow)
     }
 }

@@ -48,7 +48,6 @@ class MyValidatingNotaryFlow(otherSide: Party, service: MyCustomValidatingNotary
         val stx = receive<SignedTransaction>(otherSide).unwrap { it }
         checkSignatures(stx)
         val wtx = stx.tx
-        validateTransaction(wtx)
         val ltx = validateTransaction(wtx)
         processTransaction(ltx)
 

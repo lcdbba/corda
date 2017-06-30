@@ -11,7 +11,10 @@ import net.corda.core.flows.FlowException
 import net.corda.core.flows.FlowLogic
 import net.corda.core.flows.InitiatingFlow
 import net.corda.core.identity.Party
-import net.corda.core.node.services.*
+import net.corda.core.internal.datavending.FetchDataFlow
+import net.corda.core.node.services.NotaryService
+import net.corda.core.node.services.TrustedAuthorityNotaryService
+import net.corda.core.node.services.UniquenessProvider
 import net.corda.core.serialization.CordaSerializable
 import net.corda.core.transactions.SignedTransaction
 import net.corda.core.utilities.ProgressTracker
@@ -65,7 +68,8 @@ object NotaryFlow {
             }
 
             val response = try {
-                sendAndReceiveWithRetry<List<DigitalSignature.WithKey>>(notaryParty, payload)
+                subFlow(SendTransactionWithRetry(notaryParty, payload))
+                receive<List<DigitalSignature.WithKey>>(notaryParty)
             } catch (e: NotaryException) {
                 if (e.error is NotaryError.Conflict) {
                     e.error.conflict.verified()
@@ -143,4 +147,13 @@ sealed class NotaryError {
     data class SignaturesMissing(val cause: SignedTransaction.SignaturesMissingException) : NotaryError() {
         override fun toString() = cause.toString()
     }
+}
+
+/**
+ * The [SendTransactionWithRetry] flow is equivalent to [SendTransactionFlow] but using [sendAndReceiveWithRetry]
+ * instead of [sendAndReceive], [SendTransactionWithRetry] is intended to be use by the notary client only.
+ */
+private class SendTransactionWithRetry(otherSide: Party, initialPayload: Any) : SendTransactionFlow(otherSide, initialPayload) {
+    @Suspendable
+    override fun sendPayloadAndReceiveDataRequest(payload: Any?) = sendAndReceiveWithRetry<FetchDataFlow.Request>(otherSide, payload!!)
 }
