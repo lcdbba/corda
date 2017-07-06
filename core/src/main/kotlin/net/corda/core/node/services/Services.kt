@@ -4,9 +4,7 @@ import co.paralleluniverse.fibers.Suspendable
 import com.google.common.util.concurrent.ListenableFuture
 import net.corda.core.contracts.*
 import net.corda.core.crypto.composite.CompositeKey
-import net.corda.core.crypto.DigitalSignature
-import net.corda.core.crypto.SecureHash
-import net.corda.core.crypto.keys
+import net.corda.core.crypto.*
 import net.corda.core.flows.FlowException
 import net.corda.core.identity.AbstractParty
 import net.corda.core.identity.Party
@@ -129,7 +127,7 @@ class Vault<out T : ContractState>(val states: Iterable<StateAndRef<T>>) {
      *  results will be empty)
      */
     @CordaSerializable
-    data class Page<out T : ContractState>(val states: List<StateAndRef<T>>,
+    data class Page<T : ContractState>(val states: List<StateAndRef<T>>,
                                            val statesMetadata: List<StateMetadata>,
                                            val totalStatesAvailable: Long,
                                            val stateTypes: StateStatus,
@@ -468,7 +466,7 @@ inline fun <reified T : ContractState> VaultQueryService.trackBy(criteria: Query
     return _trackBy(criteria, paging, sorting, T::class.java)
 }
 
-class VaultQueryException(description: String) : FlowException("$description")
+class VaultQueryException(description: String) : FlowException(description)
 
 /**
  * The KMS is responsible for storing and using private keys to sign things. An implementation of this may, for example,
@@ -518,6 +516,9 @@ interface KeyManagementService {
      */
     @Suspendable
     fun sign(bytes: ByteArray, publicKey: PublicKey): DigitalSignature.WithKey
+
+    @Suspendable
+    fun sign(merkleRootWithMeta: MerkleRootWithMeta, publicKey: PublicKey): TransactionSignature
 }
 
 /**

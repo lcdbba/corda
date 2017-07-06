@@ -2,7 +2,10 @@
 
 package net.corda.testing
 
-import net.corda.core.crypto.*
+import net.corda.core.crypto.CertificateAndKeyPair
+import net.corda.core.crypto.X509Utilities
+import net.corda.core.crypto.entropyToKeyPair
+import net.corda.core.crypto.generateKeyPair
 import net.corda.core.crypto.testing.DummyPublicKey
 import net.corda.core.identity.Party
 import net.corda.core.identity.PartyAndCertificate
@@ -66,4 +69,7 @@ val DUMMY_CA: CertificateAndKeyPair by lazy {
     val cert = X509Utilities.createSelfSignedCACertificate(X500Name("CN=Dummy CA,OU=Corda,O=R3 Ltd,L=London,C=GB"), DUMMY_CA_KEY)
     CertificateAndKeyPair(cert, DUMMY_CA_KEY)
 }
+
+val DUMMY_IDENTITY_1: PartyAndCertificate get() = getTestPartyAndCertificate(DUMMY_PARTY)
+val DUMMY_PARTY: Party get() = Party(X500Name("CN=Dummy,O=Dummy,L=Madrid,C=ES"), DUMMY_KEY_1.public)
 
