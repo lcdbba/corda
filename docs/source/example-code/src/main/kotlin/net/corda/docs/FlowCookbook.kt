@@ -10,7 +10,9 @@ import net.corda.testing.contracts.DummyState
 import net.corda.core.crypto.DigitalSignature
 import net.corda.core.crypto.SecureHash
 import net.corda.core.flows.*
+import net.corda.core.identity.AnonymousParty
 import net.corda.core.identity.Party
+import net.corda.core.identity.PartyAndCertificate
 import net.corda.core.node.services.ServiceType
 import net.corda.core.node.services.Vault.Page
 import net.corda.core.node.services.queryBy
@@ -24,10 +26,7 @@ import net.corda.core.utilities.ProgressTracker
 import net.corda.core.utilities.ProgressTracker.Step
 import net.corda.core.utilities.UntrustworthyData
 import net.corda.core.utilities.unwrap
-import net.corda.flows.CollectSignaturesFlow
-import net.corda.flows.FinalityFlow
-import net.corda.flows.ResolveTransactionsFlow
-import net.corda.flows.SignTransactionFlow
+import net.corda.flows.*
 import org.bouncycastle.asn1.x500.X500Name
 import java.security.PublicKey
 import java.time.Duration
@@ -444,13 +443,18 @@ object FlowCookbook {
             -----------------------**/
             progressTracker.currentStep = SIGS_GATHERING
 
+            // TODO: Use actual anonymous identities
+            val identities = listOf(serviceHub.myInfo.legalIdentityAndCert, serviceHub.identityService.certificateFromParty(counterparty)!!)
+                    .map { node ->
+                        Pair(node.party, node.toAnonymisedIdentity())
+                    }.toMap()
             // The list of parties who need to sign a transaction is dictated
             // by the transaction's commands. Once we've signed a transaction
             // ourselves, we can automatically gather the signatures of the
             // other required signers using ``CollectSignaturesFlow``.
             // The responder flow will need to call ``SignTransactionFlow``.
             // DOCSTART 15
-            val fullySignedTx: SignedTransaction = subFlow(CollectSignaturesFlow(twiceSignedTx, SIGS_GATHERING.childProgressTracker()))
+            val fullySignedTx: SignedTransaction = subFlow(CollectSignaturesFlow(twiceSignedTx, identities, SIGS_GATHERING.childProgressTracker()))
             // DOCEND 15
 
             /**-----------------------

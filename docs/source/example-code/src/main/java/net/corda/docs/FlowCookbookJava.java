@@ -13,6 +13,7 @@ import net.corda.core.crypto.DigitalSignature;
 import net.corda.core.crypto.SecureHash;
 import net.corda.core.flows.*;
 import net.corda.core.identity.Party;
+import net.corda.core.identity.PartyAndCertificate;
 import net.corda.core.node.services.ServiceType;
 import net.corda.core.node.services.Vault;
 import net.corda.core.node.services.Vault.Page;
@@ -24,18 +25,18 @@ import net.corda.core.transactions.WireTransaction;
 import net.corda.core.utilities.ProgressTracker;
 import net.corda.core.utilities.ProgressTracker.Step;
 import net.corda.core.utilities.UntrustworthyData;
-import net.corda.flows.CollectSignaturesFlow;
-import net.corda.flows.FinalityFlow;
-import net.corda.flows.ResolveTransactionsFlow;
-import net.corda.flows.SignTransactionFlow;
+import net.corda.flows.*;
 import org.bouncycastle.asn1.x500.X500Name;
 
 import java.security.PublicKey;
 import java.security.SignatureException;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static net.corda.core.contracts.ContractsDSL.requireThat;
 import static net.corda.testing.TestConstants.getDUMMY_PUBKEY_1;
@@ -459,13 +460,17 @@ public class FlowCookbookJava {
             ------------------------*/
             progressTracker.setCurrentStep(SIGS_GATHERING);
 
+            // TODO: Use actual anonymous identities
+            final List<PartyAndCertificate> nodes = Arrays.asList(getServiceHub().getMyInfo().getLegalIdentityAndCert(),
+                    getServiceHub().getIdentityService().certificateFromParty(counterparty));
+            final Map<Party, AnonymisedIdentity> identities = nodes.stream().collect(Collectors.toMap(PartyAndCertificate::getParty, PartyAndCertificate::toAnonymisedIdentity));
             // The list of parties who need to sign a transaction is dictated
             // by the transaction's commands. Once we've signed a transaction
             // ourselves, we can automatically gather the signatures of the
             // other required signers using ``CollectSignaturesFlow``.
             // The responder flow will need to call ``SignTransactionFlow``.
             // DOCSTART 15
-            SignedTransaction fullySignedTx = subFlow(new CollectSignaturesFlow(twiceSignedTx, SIGS_GATHERING.childProgressTracker()));
+            SignedTransaction fullySignedTx = subFlow(new CollectSignaturesFlow(twiceSignedTx, identities, SIGS_GATHERING.childProgressTracker()));
             // DOCEND 15
 
             /*------------------------

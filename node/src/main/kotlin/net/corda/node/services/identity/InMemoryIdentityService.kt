@@ -127,18 +127,22 @@ class InMemoryIdentityService(identities: Iterable<PartyAndCertificate> = emptyS
 
     @Throws(CertificateExpiredException::class, CertificateNotYetValidException::class, InvalidAlgorithmParameterException::class)
     override fun registerAnonymousIdentity(anonymousParty: AnonymousParty, party: Party, path: CertPath) {
+        val fullParty = verifyAnonymousIdentity(anonymousParty, party, path)
+        log.trace { "Registering identity $fullParty" }
+
+        partyToPath[anonymousParty] = path
+        keyToParties[anonymousParty.owningKey] = fullParty
+        principalToParties[fullParty.name] = fullParty
+    }
+
+    override fun verifyAnonymousIdentity(anonymousParty: AnonymousParty, party: Party, path: CertPath): PartyAndCertificate {
         val fullParty = certificateFromParty(party) ?: throw IllegalArgumentException("Unknown identity ${party.name}")
         require(path.certificates.isNotEmpty()) { "Certificate path must contain at least one certificate" }
         // Validate the chain first, before we do anything clever with it
         validateCertificatePath(anonymousParty, path)
         val subjectCertificate = path.certificates.first()
         require(subjectCertificate is X509Certificate && subjectCertificate.subject == fullParty.name) { "Subject of the transaction certificate must match the well known identity" }
-
-        log.trace { "Registering identity $fullParty" }
-
-        partyToPath[anonymousParty] = path
-        keyToParties[anonymousParty.owningKey] = fullParty
-        principalToParties[fullParty.name] = fullParty
+        return fullParty
     }
 
     /**

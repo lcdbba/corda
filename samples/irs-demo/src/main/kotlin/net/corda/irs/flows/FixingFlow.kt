@@ -101,16 +101,12 @@ object FixingFlow {
     class Floater(override val otherParty: Party,
                   override val payload: FixingSession,
                   override val progressTracker: ProgressTracker = TwoPartyDealFlow.Primary.tracker()) : TwoPartyDealFlow.Primary() {
+        override val anonymous: Boolean = true
 
         @Suppress("UNCHECKED_CAST")
         internal val dealToFix: StateAndRef<FixableDealState> by TransientProperty {
             val state = serviceHub.loadState(payload.ref) as TransactionState<FixableDealState>
             StateAndRef(state, payload.ref)
-        }
-
-        override val myKey: PublicKey get() {
-            dealToFix.state.data.participants.single { it.owningKey == serviceHub.myInfo.legalIdentity.owningKey }
-            return serviceHub.legalIdentityKey
         }
 
         override val notaryNode: NodeInfo get() {

@@ -5,6 +5,7 @@ import net.corda.core.contracts.ContractState
 import net.corda.core.contracts.StateRef
 import net.corda.core.contracts.TransactionState
 import net.corda.core.crypto.isFulfilledBy
+import net.corda.core.crypto.toStringShort
 import net.corda.core.flows.FlowLogic
 import net.corda.core.identity.Party
 import net.corda.core.node.ServiceHub
@@ -103,8 +104,9 @@ class FinalityFlow(val transactions: Iterable<SignedTransaction>,
         return ltxns.map { (stx, ltx) ->
             // Calculate who is meant to see the results based on the participants involved.
             val keys = ltx.outputs.flatMap { it.data.participants } + ltx.inputs.flatMap { it.state.data.participants }
-            // TODO: Is it safe to drop participants we don't know how to contact? Does not knowing how to contact them count as a reason to fail?
-            val parties = keys.mapNotNull { serviceHub.identityService.partyFromAnonymous(it) }.toSet()
+            val parties = keys.map { anon ->
+                serviceHub.identityService.partyFromAnonymous(anon) ?: throw IllegalArgumentException("Cannot resolve well known identity of anonymous key ${anon.owningKey.toStringShort()}")
+            }.toSet()
             Pair(stx, parties)
         }
     }

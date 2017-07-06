@@ -29,15 +29,28 @@ interface IdentityService {
     fun registerIdentity(party: PartyAndCertificate)
 
     /**
-     * Verify and then store an identity.
+     * Verify and then store an anonymous identity.
      *
      * @param anonymousParty a party representing a legal entity in a transaction.
+     * @param party well known party the anonymised party must represent.
      * @param path certificate path from the trusted root to the party.
      * @throws IllegalArgumentException if the certificate path is invalid, or if there is already an existing
      * certificate chain for the anonymous party.
      */
     @Throws(CertificateExpiredException::class, CertificateNotYetValidException::class, InvalidAlgorithmParameterException::class)
     fun registerAnonymousIdentity(anonymousParty: AnonymousParty, party: Party, path: CertPath)
+
+    /**
+     * Verify an anonymous identity.
+     *
+     * @param anonymousParty a party representing a legal entity in a transaction.
+     * @param party well known party the anonymised party must represent.
+     * @param path certificate path from the trusted root to the party.
+     * @return the full well known identity.
+     * @throws IllegalArgumentException if the certificate path is invalid.
+     */
+    @Throws(CertificateExpiredException::class, CertificateNotYetValidException::class, InvalidAlgorithmParameterException::class)
+    fun verifyAnonymousIdentity(anonymousParty: AnonymousParty, party: Party, path: CertPath): PartyAndCertificate
 
     /**
      * Asserts that an anonymous party maps to the given full party, by looking up the certificate chain associated with
