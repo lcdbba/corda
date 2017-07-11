@@ -2,6 +2,8 @@
 
 package net.corda.testing
 
+import net.corda.core.contracts.Command
+import net.corda.core.contracts.TypeOnlyCommandData
 import net.corda.core.crypto.*
 import net.corda.core.crypto.testing.DummyPublicKey
 import net.corda.core.identity.Party
@@ -67,3 +69,4 @@ val DUMMY_CA: CertificateAndKeyPair by lazy {
     CertificateAndKeyPair(cert, DUMMY_CA_KEY)
 }
 
+fun dummyCommand(vararg signers: PublicKey) = Command(object : TypeOnlyCommandData() {}, signers.toList())
