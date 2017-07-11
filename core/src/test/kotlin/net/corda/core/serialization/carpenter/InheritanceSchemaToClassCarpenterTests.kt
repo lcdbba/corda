@@ -1,9 +1,9 @@
 package net.corda.core.serialization.carpenter
 
 import net.corda.core.serialization.CordaSerializable
-import net.corda.core.serialization.carpenter.MetaCarpenter
 import net.corda.core.serialization.carpenter.test.*
 import net.corda.core.serialization.amqp.*
+import net.corda.core.serialization.test.*
 
 import org.junit.Test
 import kotlin.test.*
@@ -67,16 +67,16 @@ class InheritanceSchemaToClassCarpenterTests : AmqpCarpenterBase() {
            it's extremely unlikely we'd need to carpent any classes */
         assertEquals(0, l1.size)
 
-        val corruptSchema = serSchema.corruptName(listOf(classTestName("A")))
+        val corruptSchema = serSchema.mangleName(listOf(classTestName("A")))
 
         val l2 = corruptSchema.carpenterSchema()
 
         assertEquals(1, l2.size)
-        val aSchema = l2.carpenterSchemas.find { it.name == corruptName(classTestName("A")) }
+        val aSchema = l2.carpenterSchemas.find { it.name == mangleName(classTestName("A")) }
 
         assertNotEquals(null, aSchema)
 
-        assertEquals(corruptName(classTestName("A")), aSchema!!.name)
+        assertEquals(mangleName(classTestName("A")), aSchema!!.name)
         assertEquals(1, aSchema.interfaces.size)
         assertEquals(net.corda.core.serialization.carpenter.J::class.java, aSchema.interfaces[0])
 
@@ -116,8 +116,8 @@ class InheritanceSchemaToClassCarpenterTests : AmqpCarpenterBase() {
            it's extremely unlikely we'd need to carpent any classes */
         assertEquals(0, l1.size)
 
-        val corruptSchema = serSchema.corruptName(listOf(classTestName("A")))
-        val aName = corruptName(classTestName("A"))
+        val corruptSchema = serSchema.mangleName(listOf(classTestName("A")))
+        val aName = mangleName(classTestName("A"))
 
         val l2 = corruptSchema.carpenterSchema()
 
@@ -167,9 +167,9 @@ class InheritanceSchemaToClassCarpenterTests : AmqpCarpenterBase() {
         /* pretend we don't know the class we've been sent, i.e. it's unknown to the class loader, and thus
            needs some carpentry */
 
-        val corruptSchema = serSchema.corruptName(listOf(classTestName("A")))
+        val corruptSchema = serSchema.mangleName(listOf(classTestName("A")))
         val l2 = corruptSchema.carpenterSchema()
-        val aName = corruptName(classTestName("A"))
+        val aName = mangleName(classTestName("A"))
 
         assertEquals(1, l2.size)
 
@@ -217,9 +217,9 @@ class InheritanceSchemaToClassCarpenterTests : AmqpCarpenterBase() {
            it's extremely unlikely we'd need to carpent any classes */
         assertEquals(0, l1.size)
 
-        val corruptSchema = serSchema.corruptName(listOf(classTestName("A")))
+        val corruptSchema = serSchema.mangleName(listOf(classTestName("A")))
         val l2 = corruptSchema.carpenterSchema()
-        val aName = corruptName(classTestName("A"))
+        val aName = mangleName(classTestName("A"))
 
         assertEquals(1, l2.size)
 
@@ -271,10 +271,10 @@ class InheritanceSchemaToClassCarpenterTests : AmqpCarpenterBase() {
          */
         assertEquals(4, serSchema.types.size)
 
-        val corruptSchema = serSchema.corruptName(listOf(classTestName("A"), classTestName("B")))
+        val corruptSchema = serSchema.mangleName(listOf(classTestName("A"), classTestName("B")))
         val cSchema = corruptSchema.carpenterSchema()
-        val aName = corruptName(classTestName("A"))
-        val bName = corruptName(classTestName("B"))
+        val aName = mangleName(classTestName("A"))
+        val bName = mangleName(classTestName("B"))
 
         assertEquals(2, cSchema.size)
 
@@ -333,7 +333,7 @@ class InheritanceSchemaToClassCarpenterTests : AmqpCarpenterBase() {
         assertEquals(4, serSchema.types.size)
 
         /* ignore the return as we expect this to throw */
-        serSchema.corruptName(listOf(
+        serSchema.mangleName(listOf(
                 classTestName("A"), "${this.javaClass.`package`.name}.I")).carpenterSchema()
     }
 
@@ -358,10 +358,10 @@ class InheritanceSchemaToClassCarpenterTests : AmqpCarpenterBase() {
          */
         assertEquals(2, serSchema.types.size)
 
-        val amqpSchema = serSchema.corruptName(listOf(classTestName("A"), "${this.javaClass.`package`.name}.I"))
+        val amqpSchema = serSchema.mangleName(listOf(classTestName("A"), "${this.javaClass.`package`.name}.I"))
 
-        val aName = corruptName(classTestName("A"))
-        val iName = corruptName("${this.javaClass.`package`.name}.I")
+        val aName = mangleName(classTestName("A"))
+        val iName = mangleName("${this.javaClass.`package`.name}.I")
 
         val carpenterSchema = amqpSchema.carpenterSchema()
 
@@ -405,14 +405,14 @@ class InheritanceSchemaToClassCarpenterTests : AmqpCarpenterBase() {
 
         val obj = DeserializationInput(factory).deserializeAndReturnEnvelope(serialise(a))
 
-        val amqpSchema = obj.envelope.schema.corruptName(listOf(
+        val amqpSchema = obj.envelope.schema.mangleName(listOf(
                 classTestName("A"),
                 "${this.javaClass.`package`.name}.I",
                 "${this.javaClass.`package`.name}.II"))
 
-        val aName = corruptName(classTestName("A"))
-        val iName = corruptName("${this.javaClass.`package`.name}.I")
-        val iiName = corruptName("${this.javaClass.`package`.name}.II")
+        val aName = mangleName(classTestName("A"))
+        val iName = mangleName("${this.javaClass.`package`.name}.I")
+        val iiName = mangleName("${this.javaClass.`package`.name}.II")
 
         val carpenterSchema = amqpSchema.carpenterSchema()
 
@@ -460,14 +460,14 @@ class InheritanceSchemaToClassCarpenterTests : AmqpCarpenterBase() {
 
         val obj = DeserializationInput(factory).deserializeAndReturnEnvelope(serialise(a))
 
-        val amqpSchema = obj.envelope.schema.corruptName(listOf(
+        val amqpSchema = obj.envelope.schema.mangleName(listOf(
                 classTestName("A"),
                 "${this.javaClass.`package`.name}.I",
                 "${this.javaClass.`package`.name}.III"))
 
-        val aName = corruptName(classTestName("A"))
-        val iName = corruptName("${this.javaClass.`package`.name}.I")
-        val iiiName = corruptName("${this.javaClass.`package`.name}.III")
+        val aName = mangleName(classTestName("A"))
+        val iName = mangleName("${this.javaClass.`package`.name}.I")
+        val iiiName = mangleName("${this.javaClass.`package`.name}.III")
 
         val carpenterSchema = amqpSchema.carpenterSchema()
 
@@ -489,12 +489,12 @@ class InheritanceSchemaToClassCarpenterTests : AmqpCarpenterBase() {
         assertEquals(1, carpenterSchema.dependsOn[iiiName]?.size)
         assertNotNull(carpenterSchema.dependsOn[iiiName]?.find { it == aName })
 
-        /* converly III depends on I */
+        // conversly III depends on I
         assert(iiiName in carpenterSchema.dependencies)
         assertEquals(1, carpenterSchema.dependencies[iiiName]!!.second.size)
         assertNotNull(carpenterSchema.dependencies[iiiName]!!.second.find { it == iName })
 
-        /* and A depends on III and I*/
+        // and A depends on III and I
         assert(aName in carpenterSchema.dependencies)
         assertEquals(2, carpenterSchema.dependencies[aName]!!.second.size)
         assertNotNull(carpenterSchema.dependencies[aName]!!.second.find { it == iiiName })

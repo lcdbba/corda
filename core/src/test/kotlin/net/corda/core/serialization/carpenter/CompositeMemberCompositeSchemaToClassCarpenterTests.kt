@@ -3,6 +3,7 @@ package net.corda.core.serialization.carpenter
 import net.corda.core.serialization.carpenter.test.*
 import net.corda.core.serialization.CordaSerializable
 import net.corda.core.serialization.amqp.*
+import net.corda.core.serialization.test.*
 
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -96,7 +97,7 @@ class CompositeMembers : AmqpCarpenterBase() {
         val b = B(A(testA), testB)
 
         val obj = DeserializationInput(factory).deserializeAndReturnEnvelope(serialise(b))
-        val amqpSchema = obj.envelope.schema.corruptName(listOf (classTestName ("A")))
+        val amqpSchema = obj.envelope.schema.mangleName(listOf (classTestName ("A")))
 
         assert(obj.obj is B)
 
@@ -120,7 +121,7 @@ class CompositeMembers : AmqpCarpenterBase() {
 
         assert(obj.obj is B)
 
-        val amqpSchema = obj.envelope.schema.corruptName(listOf(classTestName("B")))
+        val amqpSchema = obj.envelope.schema.mangleName(listOf(classTestName("B")))
 
         val carpenterSchema = amqpSchema.carpenterSchema()
 
@@ -130,7 +131,7 @@ class CompositeMembers : AmqpCarpenterBase() {
 
         metaCarpenter.build()
 
-        assert(corruptName(classTestName("B")) in metaCarpenter.objects)
+        assert(mangleName(classTestName("B")) in metaCarpenter.objects)
     }
 
     @Test
@@ -150,18 +151,18 @@ class CompositeMembers : AmqpCarpenterBase() {
 
         assert(obj.obj is B)
 
-        val amqpSchema = obj.envelope.schema.corruptName(listOf(classTestName("A"), classTestName("B")))
+        val amqpSchema = obj.envelope.schema.mangleName(listOf(classTestName("A"), classTestName("B")))
 
         val carpenterSchema = amqpSchema.carpenterSchema()
 
         /* just verify we're in the expected initial state, A is carpentable, B is not because
            it depends on A and the dependency chains are in place */
         assertEquals(1, carpenterSchema.size)
-        assertEquals(corruptName(classTestName("A")), carpenterSchema.carpenterSchemas.first().name)
+        assertEquals(mangleName(classTestName("A")), carpenterSchema.carpenterSchemas.first().name)
         assertEquals(1, carpenterSchema.dependencies.size)
-        assert(corruptName(classTestName("B")) in carpenterSchema.dependencies)
+        assert(mangleName(classTestName("B")) in carpenterSchema.dependencies)
         assertEquals(1, carpenterSchema.dependsOn.size)
-        assert(corruptName(classTestName("A")) in carpenterSchema.dependsOn)
+        assert(mangleName(classTestName("A")) in carpenterSchema.dependsOn)
 
         /* test meta carpenter lets us single step over the creation */
         val metaCarpenter = TestMetaCarpenter(carpenterSchema)
@@ -174,18 +175,18 @@ class CompositeMembers : AmqpCarpenterBase() {
 
         /* one build iteration should have carpetned up A and worked out that B is now buildable
            given it's depedencies have been satisfied */
-        assertTrue(corruptName(classTestName("A")) in metaCarpenter.objects)
-        assertFalse(corruptName(classTestName("B")) in metaCarpenter.objects)
+        assertTrue(mangleName(classTestName("A")) in metaCarpenter.objects)
+        assertFalse(mangleName(classTestName("B")) in metaCarpenter.objects)
 
         assertEquals(1, carpenterSchema.carpenterSchemas.size)
-        assertEquals(corruptName(classTestName("B")), carpenterSchema.carpenterSchemas.first().name)
+        assertEquals(mangleName(classTestName("B")), carpenterSchema.carpenterSchemas.first().name)
         assertTrue(carpenterSchema.dependencies.isEmpty())
         assertTrue(carpenterSchema.dependsOn.isEmpty())
 
         /* second manual iteration, will carpent B */
         metaCarpenter.build()
-        assert(corruptName(classTestName("A")) in metaCarpenter.objects)
-        assert(corruptName(classTestName("B")) in metaCarpenter.objects)
+        assert(mangleName(classTestName("A")) in metaCarpenter.objects)
+        assert(mangleName(classTestName("B")) in metaCarpenter.objects)
 
         assertTrue(carpenterSchema.carpenterSchemas.isEmpty())
     }
@@ -211,7 +212,7 @@ class CompositeMembers : AmqpCarpenterBase() {
 
         assert(obj.obj is C)
 
-        val amqpSchema = obj.envelope.schema.corruptName(listOf(classTestName("A"), classTestName("B")))
+        val amqpSchema = obj.envelope.schema.mangleName(listOf(classTestName("A"), classTestName("B")))
 
         amqpSchema.carpenterSchema()
     }
@@ -237,7 +238,7 @@ class CompositeMembers : AmqpCarpenterBase() {
 
         assert(obj.obj is C)
 
-        val amqpSchema = obj.envelope.schema.corruptName(listOf(classTestName("A"), classTestName("B")))
+        val amqpSchema = obj.envelope.schema.mangleName(listOf(classTestName("A"), classTestName("B")))
 
         amqpSchema.carpenterSchema()
     }
@@ -263,7 +264,7 @@ class CompositeMembers : AmqpCarpenterBase() {
 
         assert(obj.obj is C)
 
-        val carpenterSchema = obj.envelope.schema.corruptName(listOf(classTestName("A"), classTestName("B")))
+        val carpenterSchema = obj.envelope.schema.mangleName(listOf(classTestName("A"), classTestName("B")))
 
         TestMetaCarpenter(carpenterSchema.carpenterSchema())
     }
@@ -289,14 +290,14 @@ class CompositeMembers : AmqpCarpenterBase() {
 
         assert(obj.obj is B)
 
-        val carpenterSchema = obj.envelope.schema.corruptName(listOf(classTestName("A"), classTestName("B")))
+        val carpenterSchema = obj.envelope.schema.mangleName(listOf(classTestName("A"), classTestName("B")))
 
         val metaCarpenter = TestMetaCarpenter(carpenterSchema.carpenterSchema())
 
         assertEquals(1, metaCarpenter.schemas.carpenterSchemas.size)
-        assertEquals(corruptName(classTestName("B")), metaCarpenter.schemas.carpenterSchemas.first().name)
+        assertEquals(mangleName(classTestName("B")), metaCarpenter.schemas.carpenterSchemas.first().name)
         assertEquals(1, metaCarpenter.schemas.dependencies.size)
-        assertTrue(corruptName(classTestName("A")) in metaCarpenter.schemas.dependencies)
+        assertTrue(mangleName(classTestName("A")) in metaCarpenter.schemas.dependencies)
     }
     */
 }

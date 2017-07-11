@@ -9,42 +9,6 @@ import net.corda.core.serialization.amqp.SerializationOutput
 
 /**********************************************************************************************************************/
 
-fun corruptName(name: String) = "${name}__carpenter"
-
-/**********************************************************************************************************************/
-
-/* given a list of class names work through the amqp envelope schema and alter any that
-   match in the fashion defined above */
-fun Schema.corruptName(names: List<String>): Schema {
-    val newTypes: MutableList<TypeNotation> = mutableListOf()
-
-    for (type in types) {
-        val newName = if (type.name in names) corruptName(type.name) else type.name
-
-        val newProvides = type.provides.map {
-            it ->
-            if (it in names) corruptName(it) else it
-        }
-
-        val newFields = mutableListOf<Field>()
-
-        (type as CompositeType).fields.forEach {
-            val fieldType = if (it.type in names) corruptName(it.type) else it.type
-
-            val requires = if (it.requires.isNotEmpty() && (it.requires[0] in names))
-                listOf(corruptName(it.requires[0])) else it.requires
-
-            newFields.add(it.copy(type = fieldType, requires = requires))
-        }
-
-        newTypes.add(type.copy(name = newName, provides = newProvides, fields = newFields))
-    }
-
-    return Schema(types = newTypes)
-}
-
-/**********************************************************************************************************************/
-
 open class AmqpCarpenterBase {
     var factory = SerializerFactory()
 

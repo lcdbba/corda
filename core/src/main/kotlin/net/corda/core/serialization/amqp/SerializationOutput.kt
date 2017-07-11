@@ -34,6 +34,12 @@ open class SerializationOutput(internal val serializerFactory: SerializerFactory
                     // Our object
                     writeObject(obj, this)
                     // The schema
+                    println (schemaHistory.toList())
+
+//                    schemaHistory.forEach {
+//                        it.copy
+//                    }
+
                     putObject(Schema(schemaHistory.toList()))
                 }
             }
