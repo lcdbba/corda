@@ -142,7 +142,7 @@ class ResolveTransactionsFlow(private val txHashes: Set<SecureHash>,
                 check(resultQ.putIfAbsent(stx.id, stx) == null)   // Assert checks the filter at the start.
 
             // Add all input states to the work queue.
-            val inputHashes = downloads.flatMap { it.tx.inputs }.map { it.txhash }
+            val inputHashes = downloads.flatMap { it.inputs }.map { it.txhash }
             nextRequests.addAll(inputHashes)
 
             limitCounter = limitCounter checkedAdd nextRequests.size

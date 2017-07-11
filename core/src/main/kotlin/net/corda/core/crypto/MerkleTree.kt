@@ -18,7 +18,7 @@ sealed class MerkleTree {
     data class Node(override val hash: SecureHash, val left: MerkleTree, val right: MerkleTree) : MerkleTree()
 
     companion object {
-        private fun isPow2(num: Int): Boolean = num and (num - 1) == 0
+        private fun isPow2(num: Int): Boolean = num > 0 && (num and (num - 1)) == 0
 
         /**
          * Merkle tree building using hashes, with zero hash padding to full power of 2.
