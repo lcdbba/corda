@@ -72,36 +72,34 @@ public class VaultQueryJavaTests {
         Pair<Closeable, Database> dataSourceAndDatabase = configureDatabase(dataSourceProps);
         dataSource = dataSourceAndDatabase.getFirst();
         database = dataSourceAndDatabase.getSecond();
+        transaction(database, statement -> {
+            Set<MappedSchema> customSchemas = new HashSet<>(Collections.singletonList(DummyLinearStateSchemaV1.INSTANCE));
+            HibernateConfiguration hibernateConfig = new HibernateConfiguration(new NodeSchemaService(customSchemas));
+            services = new MockServices(getMEGA_CORP_KEY()) {
+                @NotNull
+                @Override
+                public VaultService getVaultService() {
+                    if (vaultSvc != null) return vaultSvc;
+                    return makeVaultService(dataSourceProps, hibernateConfig);
+                }
 
-        Set<MappedSchema> customSchemas = new HashSet<>(Collections.singletonList(DummyLinearStateSchemaV1.INSTANCE));
-        HibernateConfiguration hibernateConfig = new HibernateConfiguration(new NodeSchemaService(customSchemas));
-        transaction(database,
-                    statement -> { services = new MockServices(getMEGA_CORP_KEY()) {
-                        @NotNull
-                        @Override
-                        public VaultService getVaultService() {
-                            return makeVaultService(dataSourceProps, hibernateConfig);
-                        }
+                @NotNull
+                @Override
+                public VaultQueryService getVaultQueryService() {
+                    return new HibernateVaultQueryImpl(hibernateConfig, vaultSvc.getUpdatesPublisher());
+                }
 
-                        @NotNull
-                        @Override
-                        public VaultQueryService getVaultQueryService() {
-                            return new HibernateVaultQueryImpl(hibernateConfig, getVaultService().getUpdatesPublisher());
-                        }
-
-                        @Override
-                        public void recordTransactions(@NotNull Iterable<SignedTransaction> txs) {
-                            for (SignedTransaction stx : txs) {
-                                getValidatedTransactions().addTransaction(stx);
-                            }
-
-                            Stream<WireTransaction> wtxn = StreamSupport.stream(txs.spliterator(), false).map(SignedTransaction::getTx);
-                            getVaultService().notifyAll(wtxn.collect(Collectors.toList()));
-                        }
-                    };
+                @Override
+                public void recordTransactions(@NotNull Iterable<SignedTransaction> txs) {
+                    for (SignedTransaction stx : txs) {
+                        getValidatedTransactions().addTransaction(stx);
+                    }
+                    Stream<WireTransaction> wtxn = StreamSupport.stream(txs.spliterator(), false).map(SignedTransaction::getTx);
+                    vaultSvc.notifyAll(wtxn.collect(Collectors.toList()));
+                }
+            };
             vaultSvc = services.getVaultService();
             vaultQuerySvc = services.getVaultQueryService();
-
             return services;
         });
     }
