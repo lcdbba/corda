@@ -3,6 +3,8 @@ package net.corda.core.utilities
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+// This file contains utilities that are only relevant in Kotlin. For stuff that's also applicable to Java put it in Utils.kt
+
 /**
  * Get the [Logger] for a class using the syntax
  *
