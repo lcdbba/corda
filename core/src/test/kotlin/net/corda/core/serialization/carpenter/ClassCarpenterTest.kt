@@ -4,6 +4,7 @@ import org.junit.Test
 import java.lang.reflect.Field
 import java.lang.reflect.Method
 import kotlin.test.assertEquals
+import java.beans.Introspector
 
 class ClassCarpenterTest {
     interface DummyInterface {
@@ -477,5 +478,16 @@ class ClassCarpenterTest {
         assertEquals (javax.annotation.Nullable::class.java, clazz.getMethod("getA").annotations[0].annotationClass.java)
         assertEquals (1, clazz.getMethod("getB").annotations.size)
         assertEquals (javax.annotation.Nonnull::class.java, clazz.getMethod("getB").annotations[0].annotationClass.java)
+    }
+
+    @Test
+    fun beanTest() {
+        val schema = ClassSchema(
+                "pantsPantsPants",
+                mapOf("a" to NullableField(String::class.java),
+                        "b" to NonNullableField(String::class.java)))
+        val clazz = cc.build(schema)
+
+        println (Introspector.getBeanInfo(clazz).propertyDescriptors)
     }
 }
