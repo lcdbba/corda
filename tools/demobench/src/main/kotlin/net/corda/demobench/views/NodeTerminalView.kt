@@ -191,7 +191,7 @@ class NodeTerminalView : Fragment() {
             val (stateInit, stateNext) = ops.vaultTrackBy<Cash.State>(paging = PageSpecification(DEFAULT_PAGE_NUM))
 
             txCount = txInit.size
-            stateCount = stateInit.totalStatesAvailable
+            stateCount = stateInit.totalStatesAvailable.toInt()
 
             Platform.runLater {
                 logo.opacityProperty().animate(1.0, Duration.seconds(2.5))

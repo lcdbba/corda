@@ -717,7 +717,6 @@ class VaultQueryTests {
     }
 
     @Test
-    @Ignore
     fun `aggregate functions with single group clause`() {
         database.transaction {
 
@@ -778,7 +777,6 @@ class VaultQueryTests {
     }
 
     @Test
-    @Ignore
     fun `aggregate functions sum by issuer and currency and sort by aggregate sum`() {
         database.transaction {
 
@@ -1483,7 +1481,6 @@ class VaultQueryTests {
     }
 
     @Test
-    @Ignore
     fun `unconsumed cash balances for all currencies`() {
         database.transaction {
 
