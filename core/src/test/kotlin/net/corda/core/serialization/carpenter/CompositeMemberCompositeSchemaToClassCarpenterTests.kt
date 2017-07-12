@@ -15,11 +15,7 @@ interface I_ {
     val a: Int
 }
 
-/*
- * Where a class has a member that is also a composite type or interface
- */
 class CompositeMembers : AmqpCarpenterBase() {
-
     @Test
     fun bothKnown() {
         val testA = 10
@@ -32,7 +28,6 @@ class CompositeMembers : AmqpCarpenterBase() {
         data class B(val a: A, var b: Int)
 
         val b = B(A(testA), testB)
-
         val obj = DeserializationInput(factory).deserializeAndReturnEnvelope(serialise(b))
 
         assert(obj.obj is B)
@@ -58,10 +53,8 @@ class CompositeMembers : AmqpCarpenterBase() {
         assert(amqpSchemaA != null)
         assert(amqpSchemaB != null)
 
-        /*
-         * Just ensure the amqp schema matches what we want before we go messing
-         * around with the internals
-         */
+        // Just ensure the amqp schema matches what we want before we go messing
+        // around with the internals
         assertEquals(1, amqpSchemaA?.fields?.size)
         assertEquals("a", amqpSchemaA!!.fields[0].name)
         assertEquals("int", amqpSchemaA.fields[0].type)
@@ -74,15 +67,15 @@ class CompositeMembers : AmqpCarpenterBase() {
 
         val metaSchema = obj.envelope.schema.carpenterSchema()
 
-        /* if we know all the classes there is nothing to really achieve here */
+        // if we know all the classes there is nothing to really achieve here
         assert(metaSchema.carpenterSchemas.isEmpty())
         assert(metaSchema.dependsOn.isEmpty())
         assert(metaSchema.dependencies.isEmpty())
     }
 
-    /* you cannot have an element of a composite class we know about
-       that is unknown as that should be impossible. If we have the containing
-       class in the class path then we must have all of it's constituent elements */
+    // you cannot have an element of a composite class we know about
+    // that is unknown as that should be impossible. If we have the containing
+    // class in the class path then we must have all of it's constituent elements
     @Test(expected = UncarpentableException::class)
     fun nestedIsUnknown() {
         val testA = 10
@@ -116,13 +109,11 @@ class CompositeMembers : AmqpCarpenterBase() {
         data class B(val a: A, var b: Int)
 
         val b = B(A(testA), testB)
-
         val obj = DeserializationInput(factory).deserializeAndReturnEnvelope(serialise(b))
 
         assert(obj.obj is B)
 
         val amqpSchema = obj.envelope.schema.mangleName(listOf(classTestName("B")))
-
         val carpenterSchema = amqpSchema.carpenterSchema()
 
         assertEquals(1, carpenterSchema.size)
@@ -135,7 +126,7 @@ class CompositeMembers : AmqpCarpenterBase() {
     }
 
     @Test
-    fun BothUnkown() {
+    fun BothUnknown() {
         val testA = 10
         val testB = 20
 
@@ -146,17 +137,15 @@ class CompositeMembers : AmqpCarpenterBase() {
         data class B(val a: A, var b: Int)
 
         val b = B(A(testA), testB)
-
         val obj = DeserializationInput(factory).deserializeAndReturnEnvelope(serialise(b))
 
         assert(obj.obj is B)
 
         val amqpSchema = obj.envelope.schema.mangleName(listOf(classTestName("A"), classTestName("B")))
-
         val carpenterSchema = amqpSchema.carpenterSchema()
 
-        /* just verify we're in the expected initial state, A is carpentable, B is not because
-           it depends on A and the dependency chains are in place */
+        // just verify we're in the expected initial state, A is carpentable, B is not because
+        // it depends on A and the dependency chains are in place
         assertEquals(1, carpenterSchema.size)
         assertEquals(mangleName(classTestName("A")), carpenterSchema.carpenterSchemas.first().name)
         assertEquals(1, carpenterSchema.dependencies.size)
@@ -164,17 +153,15 @@ class CompositeMembers : AmqpCarpenterBase() {
         assertEquals(1, carpenterSchema.dependsOn.size)
         assert(mangleName(classTestName("A")) in carpenterSchema.dependsOn)
 
-        /* test meta carpenter lets us single step over the creation */
         val metaCarpenter = TestMetaCarpenter(carpenterSchema)
 
-        /* we've built nothing so nothing should be there */
         assertEquals(0, metaCarpenter.objects.size)
 
-        /* first iteration, carpent A, resolve deps and mark B as carpentable */
+        // first iteration, carpent A, resolve deps and mark B as carpentable
         metaCarpenter.build()
 
-        /* one build iteration should have carpetned up A and worked out that B is now buildable
-           given it's depedencies have been satisfied */
+        // one build iteration should have carpetned up A and worked out that B is now buildable
+        //  given it's depedencies have been satisfied
         assertTrue(mangleName(classTestName("A")) in metaCarpenter.objects)
         assertFalse(mangleName(classTestName("B")) in metaCarpenter.objects)
 
@@ -183,15 +170,17 @@ class CompositeMembers : AmqpCarpenterBase() {
         assertTrue(carpenterSchema.dependencies.isEmpty())
         assertTrue(carpenterSchema.dependsOn.isEmpty())
 
-        /* second manual iteration, will carpent B */
+        // second manual iteration, will carpent B
         metaCarpenter.build()
         assert(mangleName(classTestName("A")) in metaCarpenter.objects)
         assert(mangleName(classTestName("B")) in metaCarpenter.objects)
 
+        // and we must be finished
         assertTrue(carpenterSchema.carpenterSchemas.isEmpty())
     }
 
     @Test(expected = UncarpentableException::class)
+    @Suppress("UNUSED")
     fun nestedIsUnkownInherited() {
         val testA = 10
         val testB = 20
@@ -207,7 +196,6 @@ class CompositeMembers : AmqpCarpenterBase() {
         data class C(val b: B, var c: Int)
 
         val c = C(B(testA, testB), testC)
-
         val obj = DeserializationInput(factory).deserializeAndReturnEnvelope(serialise(c))
 
         assert(obj.obj is C)
@@ -218,7 +206,8 @@ class CompositeMembers : AmqpCarpenterBase() {
     }
 
     @Test(expected = UncarpentableException::class)
-    fun nestedIsUnknownInheritedUnkown() {
+    @Suppress("UNUSED")
+    fun nestedIsUnknownInheritedUnknown() {
         val testA = 10
         val testB = 20
         val testC = 30
@@ -233,7 +222,6 @@ class CompositeMembers : AmqpCarpenterBase() {
         data class C(val b: B, var c: Int)
 
         val c = C(B(testA, testB), testC)
-
         val obj = DeserializationInput(factory).deserializeAndReturnEnvelope(serialise(c))
 
         assert(obj.obj is C)
@@ -243,6 +231,7 @@ class CompositeMembers : AmqpCarpenterBase() {
         amqpSchema.carpenterSchema()
     }
 
+    @Suppress("UNUSED")
     @Test(expected = UncarpentableException::class)
     fun parentsIsUnknownWithUnknownInheritedMember() {
         val testA = 10
@@ -259,17 +248,13 @@ class CompositeMembers : AmqpCarpenterBase() {
         data class C(val b: B, var c: Int)
 
         val c = C(B(testA, testB), testC)
-
         val obj = DeserializationInput(factory).deserializeAndReturnEnvelope(serialise(c))
 
         assert(obj.obj is C)
 
         val carpenterSchema = obj.envelope.schema.mangleName(listOf(classTestName("A"), classTestName("B")))
-
         TestMetaCarpenter(carpenterSchema.carpenterSchema())
     }
-
-
 
     /*
      * TODO serializer doesn't support inheritnace at the moment, when it does this should work
@@ -285,13 +270,11 @@ class CompositeMembers : AmqpCarpenterBase() {
         class B(override val a: Int, val b: Int) : A (a)
 
         val b = B(testA, testB)
-
         val obj = DeserializationInput(factory).deserializeAndReturnEnvelope(serialise(b))
 
         assert(obj.obj is B)
 
         val carpenterSchema = obj.envelope.schema.mangleName(listOf(classTestName("A"), classTestName("B")))
-
         val metaCarpenter = TestMetaCarpenter(carpenterSchema.carpenterSchema())
 
         assertEquals(1, metaCarpenter.schemas.carpenterSchemas.size)

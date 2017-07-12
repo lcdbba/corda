@@ -262,7 +262,6 @@ class ClassCarpenterTest {
                 mapOf("a" to NonNullableField (Int::class.java)))
 
         val clazz = cc.build(schema)
-
         val a : Int? = null
         clazz.constructors[0].newInstance(a)
     }
@@ -362,7 +361,6 @@ class ClassCarpenterTest {
         val clazz = cc.build(schema)
 
         val i = clazz.constructors[0].newInstance(arrayOf(1, 2, 3)) as SimpleFieldAccess
-
         val arr = clazz.getMethod("getA").invoke(i)
 
         assertEquals(1, (arr as Array<Int>)[0])
@@ -382,14 +380,12 @@ class ClassCarpenterTest {
                 "c" to Int::class.java).mapValues { NonNullableField(it.value) })
 
         val clazz = cc.build(schema)
-
         val i = clazz.constructors[0].newInstance(2, intArrayOf(4, 8), 16) as SimpleFieldAccess
 
         assertEquals(2, clazz.getMethod("getA").invoke(i))
         assertEquals(4, (clazz.getMethod("getB").invoke(i) as IntArray)[0])
         assertEquals(8, (clazz.getMethod("getB").invoke(i) as IntArray)[1])
         assertEquals(16, clazz.getMethod("getC").invoke(i))
-
         assertEquals("$className{a=2, b=[4, 8], c=16}", i.toString())
     }
 
@@ -412,7 +408,6 @@ class ClassCarpenterTest {
         assertEquals(4, (clazz.getMethod("getC").invoke(i) as IntArray)[0])
         assertEquals(5, (clazz.getMethod("getC").invoke(i) as IntArray)[1])
         assertEquals(6, (clazz.getMethod("getC").invoke(i) as IntArray)[2])
-
         assertEquals("$className{a=[1, 2], b=3, c=[4, 5, 6]}", i.toString())
     }
 
@@ -452,7 +447,6 @@ class ClassCarpenterTest {
                 "and on the side",
                 arrayOf("some pickles", "some fries"))
 
-
         val arr1 = clazz.getMethod("getA").invoke(i) as Array<String>
         val arr2 = clazz.getMethod("getC").invoke(i) as Array<String>
 
@@ -475,18 +469,13 @@ class ClassCarpenterTest {
         val clazz = cc.build(schema)
 
         assertEquals (2, clazz.declaredFields.size)
-
         assertEquals (1, clazz.getDeclaredField("a").annotations.size)
         assertEquals (javax.annotation.Nullable::class.java, clazz.getDeclaredField("a").annotations[0].annotationClass.java)
-
         assertEquals (1, clazz.getDeclaredField("b").annotations.size)
         assertEquals (javax.annotation.Nonnull::class.java, clazz.getDeclaredField("b").annotations[0].annotationClass.java)
-
         assertEquals (1, clazz.getMethod("getA").annotations.size)
         assertEquals (javax.annotation.Nullable::class.java, clazz.getMethod("getA").annotations[0].annotationClass.java)
-
         assertEquals (1, clazz.getMethod("getB").annotations.size)
         assertEquals (javax.annotation.Nonnull::class.java, clazz.getMethod("getB").annotations[0].annotationClass.java)
     }
-
 }

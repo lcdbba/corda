@@ -7,8 +7,6 @@ import net.corda.core.serialization.amqp.TypeNotation
 import net.corda.core.serialization.amqp.SerializerFactory
 import net.corda.core.serialization.amqp.SerializationOutput
 
-/**********************************************************************************************************************/
-
 open class AmqpCarpenterBase {
     var factory = SerializerFactory()
 
@@ -16,6 +14,4 @@ open class AmqpCarpenterBase {
     fun testName() = Thread.currentThread().stackTrace[2].methodName
     inline fun classTestName(clazz: String) = "${this.javaClass.name}\$${testName()}\$$clazz"
 }
-
-/**********************************************************************************************************************/
 
