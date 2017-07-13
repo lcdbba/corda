@@ -204,7 +204,7 @@ object X509Utilities {
                 CORDA_CLIENT_CA,
                 clientKey.private,
                 keyPass,
-                org.bouncycastle.cert.path.CertPath(arrayOf(clientCACert, intermediateCACert, rootCACert)))
+                listOf(clientCACert, intermediateCACert, rootCACert).map { it.cert }.toTypedArray())
         clientCAKeystore.save(clientCAKeystorePath, storePassword)
 
         val tlsKeystore = KeyStoreUtilities.loadOrCreateKeyStore(sslKeyStorePath, storePassword)
@@ -212,7 +212,7 @@ object X509Utilities {
                 CORDA_CLIENT_TLS,
                 tlsKey.private,
                 keyPass,
-                org.bouncycastle.cert.path.CertPath(arrayOf(clientTLSCert, clientCACert, intermediateCACert, rootCACert)))
+                listOf(clientTLSCert, clientCACert, intermediateCACert, rootCACert).map { it.cert }.toTypedArray())
         tlsKeystore.save(sslKeyStorePath, storePassword)
     }
 
