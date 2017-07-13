@@ -501,6 +501,23 @@ object Crypto {
      * It returns true if it succeeds and false if not. In comparison to [doVerify] if the key and signature
      * do not match it returns false rather than throwing an exception. Normally you should use the function which throws,
      * as it avoids the risk of failing to test the result.
+     * @param merkleRoot transaction's merkle root.
+     * @param transactionSignature the signature on the transaction.
+     * @throws SignatureException if this signatureData object is not initialized properly,
+     * the passed-in signatureData is improperly encoded or of the wrong type,
+     * if this signatureData scheme is unable to process the input data provided, if the verification is not possible.
+     */
+    @Throws(SignatureException::class)
+    fun isValid(merkleRoot: SecureHash, transactionSignature: TransactionSignature): Boolean {
+        val merkleRootWithMeta = MerkleRootWithMeta(merkleRoot, transactionSignature.transactionSignatureMeta)
+        return isValid(findSignatureScheme(transactionSignature.by), transactionSignature.by, transactionSignature.bytes, merkleRootWithMeta.bytes())
+    }
+
+    /**
+     * Utility to simplify the act of verifying a digital signature by identifying the signature scheme used from the input public key's type.
+     * It returns true if it succeeds and false if not. In comparison to [doVerify] if the key and signature
+     * do not match it returns false rather than throwing an exception. Normally you should use the function which throws,
+     * as it avoids the risk of failing to test the result.
      * Use this method if the signature scheme is not a-priori known.
      * @param publicKey the signer's [PublicKey].
      * @param signatureData the signatureData on a message.

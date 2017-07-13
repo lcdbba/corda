@@ -26,6 +26,9 @@ open class TransactionSignature(bytes: ByteArray, val by: PublicKey, val transac
     @Throws(InvalidKeyException::class, SignatureException::class)
     fun verify(merkleRoot: SecureHash) = Crypto.doVerify(merkleRoot, this)
 
+    @Throws(InvalidKeyException::class, SignatureException::class)
+    fun isValid(merkleRoot: SecureHash) = Crypto.isValid(merkleRoot, this)
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is TransactionSignature) return false
